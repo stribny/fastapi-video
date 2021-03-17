@@ -1,15 +1,13 @@
-from io import BytesIO
 from pathlib import Path
 from fastapi import FastAPI
-from fastapi import Request
+from fastapi import Request, Response
 from fastapi import Header
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import StreamingResponse
 
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-CHUNK_SIZE = 1024000
+CHUNK_SIZE = 1024*1024
 video_path = Path("video.mp4")
 
 
@@ -28,9 +26,7 @@ async def video_endpoint(range: str = Header(None)):
         data = video.read(end - start)
         filesize = str(video_path.stat().st_size)
         headers = {
-            'Content-Type': 'video/mp4',
-            'Content-Length': str(len(data)),
             'Content-Range': f'bytes {str(start)}-{str(end)}/{filesize}',
             'Accept-Ranges': 'bytes'
         }
-        return StreamingResponse(BytesIO(data), status_code=206, headers=headers)
+        return Response(data, status_code=206, headers=headers, media_type="video/mp4")
